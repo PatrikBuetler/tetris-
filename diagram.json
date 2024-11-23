@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "author": "Illia Solohub",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-max7219-matrix",
+      "id": "matrix1",
+      "top": 398.96,
+      "left": -160.2,
+      "rotate": 270,
+      "attrs": { "chain": "4" }
+    },
+    {
+      "type": "wokwi-max7219-matrix",
+      "id": "matrix2",
+      "top": 398.96,
+      "left": -83.4,
+      "rotate": 270,
+      "attrs": { "chain": "4" }
+    },
+    {
+      "type": "wokwi-max7219-matrix",
+      "id": "matrix3",
+      "top": 398.96,
+      "left": -6.6,
+      "rotate": 270,
+      "attrs": { "chain": "4" }
+    }
+  ],
+  "connections": [
+    [ "matrix1:GND", "mega:GND.2", "black", [ "v19.2", "h240" ] ],
+    [ "matrix1:V+", "mega:5V", "green", [ "v28.8", "h201.6" ] ],
+    [ "matrix1:DIN", "mega:12", "green", [ "v38.4", "h211.2" ] ],
+    [ "matrix1:CS", "mega:11", "green", [ "v48", "h240" ] ],
+    [ "matrix1:CLK", "mega:10", "green", [ "v38.4", "h259.2" ] ],
+    [ "matrix2:GND", "mega:GND.3", "black", [ "v38.4", "h163.2" ] ],
+    [ "matrix2:V+", "mega:VIN", "green", [ "v9.6", "h163.2" ] ],
+    [ "matrix2:DIN", "mega:7", "green", [ "v38.4", "h192" ] ],
+    [ "matrix2:CS", "mega:6", "green", [ "v57.6", "h220.8" ] ],
+    [ "matrix2:CLK", "mega:5", "green", [ "v67.2", "h230.4" ] ],
+    [ "matrix3:GND", "mega:GND.1", "black", [ "v-28.8", "h-124.8", "v-9.6" ] ],
+    [ "matrix3:V+", "mega:5V", "green", [ "v57.6", "h-67.2" ] ],
+    [ "matrix3:DIN", "mega:13", "green", [ "v-192", "h-192" ] ],
+    [ "matrix3:CS", "mega:9", "green", [ "v-220.8", "h-163.2" ] ],
+    [ "matrix3:CLK", "mega:8", "green", [ "v-249.6", "h-163.2" ] ]
+  ],
+  "dependencies": {}
+}
