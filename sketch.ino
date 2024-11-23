@@ -215,24 +215,8 @@ void setup() {
   };
   int rotation = 0;
 
-  
-
-  block = setupTetrisBlock(5,16,offsets, rotation);
-  uint8_t tBlock[9] = {
-    0, 1, 0,
-    1, 1, 1,
-    0, 1, 0
-  };
-
-  memcpy(block->mapping, tBlock, sizeof(tBlock));
-  
-  
-
+  block = setupTetrisBlock(5,16,offsets, 'l', rotation);
   print_field_binary(field);
-
-  
- 
-  
 }
 
 void loop() {
