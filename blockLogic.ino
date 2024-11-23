@@ -1,3 +1,25 @@
+const uint8_t tBlock[9] = {
+  0, 1, 0,
+  1, 1, 1,
+  0, 1, 0
+};
+
+const uint8_t iBlock[16] = {
+  1, 1, 1,
+  0, 0, 0,
+  0, 0, 0
+};
+
+const uint8_t lBlock[9] = {
+  1, 0, 0,
+  1, 1, 1,
+  0, 0, 0
+};
+const uint8_t oBlock[9] = {
+  1, 1, 0,
+  1, 1, 0,
+  0, 0, 0
+};
 void wrapCoord(Coordinate *coord, int fieldWidth, int fieldHeight) {
     if (block == NULL) return; // Ensure the block pointer is not NULL
 
@@ -15,7 +37,7 @@ void moveBlock(TetrisBlock *block, int dx, int dy)
     block->position.x += dx;
     block->position.y += dy;
 
-    uint8_t subFIndex = GetIndexSubField(block->position, 8, NUM_LCS);
+    uint8_t subFIndex = mapCoordinateToFieldAndGetIndex(block->position, 8, NUM_LCS);
     block->visitedFields[0] = block->currentField;
     if(block->currentField != subFIndex)
     {
@@ -28,7 +50,7 @@ void moveBlock(TetrisBlock *block, int dx, int dy)
 
 
 // Function to dynamically allocate and set up a TetrisBlock
-TetrisBlock* setupTetrisBlock(float posX, float posY, Coordinate offsets[], int rotation) {
+TetrisBlock* setupTetrisBlock(float posX, float posY, Coordinate offsets[], char blockType, int rotation) {
     if (offsets == NULL) return NULL; // Ensure offsets are valid
 
     // Allocate memory for the TetrisBlock
@@ -49,7 +71,27 @@ TetrisBlock* setupTetrisBlock(float posX, float posY, Coordinate offsets[], int 
 
     // Set the rotation state
     block->rotation = rotation;
-
+    switch (blockType) {
+    case 't':
+      memcpy(block->mapping, tBlock, sizeof(tBlock));
+      break;
+    case 'i':
+      memcpy(block->mapping, iBlock, sizeof(iBlock));
+      break;
+    case 'o':
+      memcpy(block->mapping, oBlock, sizeof(oBlock));
+      break;
+    case 'l':
+      memcpy(block->mapping, lBlock, sizeof(lBlock));
+      break;
+    default:
+      Serial.println("Invalid block type!");
+      return;
+    }
     return block;
 }
 
+int checkCollosions()
+{
+  
+}

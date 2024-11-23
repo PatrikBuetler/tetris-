@@ -1,5 +1,5 @@
 // function to get the index of the subfield we are drawing on
-uint8_t GetIndexSubField(Coordinate coord, int tileSize, int gridWidth) 
+uint8_t mapCoordinateToFieldAndGetIndex(Coordinate coord, int tileSize, int gridWidth) 
 {
    
     // Calculate subfield indices
@@ -30,7 +30,7 @@ void mapCoordinateToField(Field* field, Coordinate coord, int tileSize, int grid
   if (toDraw)
   {
     
-    uint8_t coordIndex = GetIndexSubField(coord,tileSize,gridWidth);
+    uint8_t coordIndex = mapCoordinateToFieldAndGetIndex(coord,tileSize,gridWidth);
     
     // Calculate position within the subfield
     int posInSubfieldX = static_cast<int>(coord.x) % tileSize;
@@ -59,7 +59,7 @@ void mapBlockToField(Field* field, const TetrisBlock* block, int tileSize, int g
         segmentCoord.x = block->position.x + block->segments[i].x;
         segmentCoord.y = block->position.y + block->segments[i].y;
         wrapCoord(&segmentCoord, fieldWidth, fieldHeight);
-        field->activeField[i] = GetIndexSubField(segmentCoord, tileSize,gridWidth);
+        field->activeField[i] = mapCoordinateToFieldAndGetIndex(segmentCoord, tileSize,gridWidth);
         mapCoordinateToField(field, segmentCoord, tileSize, gridWidth, block->mapping[i]);
     }
     
@@ -67,7 +67,7 @@ void mapBlockToField(Field* field, const TetrisBlock* block, int tileSize, int g
 
 void unmapCoordinateFromField(Field* field, Coordinate coord, int tileSize, int gridWidth, uint8_t toClear) {
   if (toClear) {
-    uint8_t coordIndex = GetIndexSubField(coord, tileSize, gridWidth);
+    uint8_t coordIndex = mapCoordinateToFieldAndGetIndex(coord, tileSize, gridWidth);
 
     // Calculate position within the subfield
     int posInSubfieldX = static_cast<int>(coord.x) % tileSize;
@@ -112,46 +112,7 @@ void fillRowField(Field* field, float y, int tileSize, int gridWidth) {
     }
 }
 
-bool isCoordinateSetInField(Field* field, Coordinate coord, int tileSize, int gridWidth, uint8_t toCheck) {
-    if (toCheck) {
-        uint8_t coordIndex = GetIndexSubField(coord, tileSize, gridWidth);
 
-        // Calculate position within the subfield
-        int posInSubfieldX = static_cast<int>(coord.x) % tileSize;
-        int posInSubfieldY = static_cast<int>(coord.y) % tileSize;
-
-        // Invert the position within the subfield
-        int invertedPosX = tileSize - 1 - posInSubfieldX;
-        int invertedPosY = tileSize - 1 - posInSubfieldY;
-
-        // Check if the bit is set at the inverted position
-        return (field->subfields[coordIndex][invertedPosY] & (1 << invertedPosX)) != 0;
-    }
-    return false;
-}
-
-
-int checkCollisions(TetrisBlock* block, Field* field, Coordinate* coord, int fieldWidth, int fieldHeight, int tileSize, int gridWidth) {
-    // Wrap the block's position within the field dimensions
-    wrapCoord(&block->position, fieldWidth, fieldHeight);
-
-    // Check each segment relative to the block's center position
-    for (int i = 0; i < 9; i++) {
-        if (block->mapping[i]) { // Check only active pixels
-            struct Coordinate segmentCoord;
-            segmentCoord.x = block->position.x + block->segments[i].x;
-            segmentCoord.y = block->position.y + block->segments[i].y;
-            wrapCoord(&segmentCoord, fieldWidth, fieldHeight);
-
-            // Use the isCoordinateSetInField function to check for collision
-            if (isCoordinateSetInField(field, segmentCoord, tileSize, gridWidth, 1)) {
-                return 0; // Collision detected
-            }
-        }
-    }
-
-    return 1; // No collisions
-}
 
 
 
