@@ -37,7 +37,7 @@ void moveBlock(TetrisBlock *block, int dx, int dy)
     block->position.x += dx;
     block->position.y += dy;
 
-    uint8_t subFIndex = mapCoordinateToFieldAndGetIndex(block->position, 8, NUM_LCS);
+    uint8_t subFIndex = GetIndexSubField(block->position, 8, NUM_LCS);
     block->visitedFields[0] = block->currentField;
     if(block->currentField != subFIndex)
     {
