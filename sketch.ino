@@ -247,8 +247,19 @@ void loop() {
   
   while (gameRunning) 
   {
-      // Game logic here
-      moveBlock(block, 0, -1);
+   
+      struct Coordinate dir;
+      dir.x = 0;
+      dir.y = -1;
+
+      struct Coordinate checkCoord;
+      checkCoord.x = block->position.x + dir.x;
+      checkCoord.y = block->position.y + dir.y;
+      
+      if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
+      {
+        moveBlock(block, dir.x, dir.y);
+      }
       
       mapBlockToField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
      

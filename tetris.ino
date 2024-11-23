@@ -131,16 +131,16 @@ bool isCoordinateSetInField(Field* field, Coordinate coord, int tileSize, int gr
 }
 
 
-int checkCollisions(TetrisBlock* block, Field* field, Coordinate* coord, int fieldWidth, int fieldHeight, int tileSize, int gridWidth) {
+int checkCollisions(Coordinate* coord, Field* field, const TetrisBlock* block, int tileSize, int gridWidth, int fieldWidth, int fieldHeight) {
     // Wrap the block's position within the field dimensions
-    wrapCoord(&block->position, fieldWidth, fieldHeight);
+    wrapCoord(coord, fieldWidth, fieldHeight);
 
     // Check each segment relative to the block's center position
     for (int i = 0; i < 9; i++) {
         if (block->mapping[i]) { // Check only active pixels
             struct Coordinate segmentCoord;
-            segmentCoord.x = block->position.x + block->segments[i].x;
-            segmentCoord.y = block->position.y + block->segments[i].y;
+            segmentCoord.x = coord->x + block->segments[i].x;
+            segmentCoord.y = coord->y + block->segments[i].y;
             wrapCoord(&segmentCoord, fieldWidth, fieldHeight);
 
             // Use the isCoordinateSetInField function to check for collision
