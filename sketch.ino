@@ -216,13 +216,16 @@ void setup() {
   int rotation = 0;
 
   
-  block = setupTetrisBlock(5,16,offsets, 'l', rotation);
-  /*uint8_t tBlock[9] = {
+
+  block = setupTetrisBlock(5,16,offsets, rotation);
+  uint8_t tBlock[9] = {
     0, 1, 0,
     1, 1, 1,
     0, 1, 0
-  };*/
-  //memcpy(block->mapping, tBlock, sizeof(tBlock));
+  };
+
+  memcpy(block->mapping, tBlock, sizeof(tBlock));
+  
   
 
   print_field_binary(field);
@@ -233,8 +236,6 @@ void setup() {
 }
 
 void loop() {
-  // Empty loop for this example
-  
   
 
   unsigned long lastExecutionTime = 0; 
@@ -266,18 +267,12 @@ void loop() {
           }
           lastExecutionTime = currentTime; // Update the last execution time
       }
-      //fillRowField(field, 0, 8, NUM_LCS);
+      
       // Hardware update
       updateDisplays(field, ledControls, NUM_LCS);
-      // clear 2 fields (the one the block is in and the one that is behind the block)
-      
-      
+      // clearing the exact area the block was cowering
       unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
-      //resetSingleSubfield(field, block->visitedFields[0]);
-      //resetSingleSubfield(field, block->visitedFields[1]);
       
-      
-      //resetSubfields(field);
   }
 
   free_field(field);
