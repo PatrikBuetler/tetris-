@@ -3,7 +3,7 @@
   "author": "Illia Solohub",
   "editor": "wokwi",
   "parts": [
-    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0.6, "left": -3.6, "attrs": {} },
     {
       "type": "wokwi-max7219-matrix",
       "id": "matrix1",
@@ -27,7 +27,37 @@
       "left": -6.6,
       "rotate": 270,
       "attrs": { "chain": "4" }
-    }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 37.8,
+      "left": 502.2,
+      "rotate": 90,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn3",
+      "top": 98.4,
+      "left": 585.8,
+      "rotate": 180,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn4",
+      "top": 88.8,
+      "left": 422.6,
+      "rotate": 180,
+      "attrs": { "color": "green" }
+    },
+    { "type": "wokwi-vcc", "id": "vcc1", "top": -8.84, "left": 480, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd1", "top": 172.8, "left": 489, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc2", "top": -8.84, "left": 604.8, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc3", "top": 10.36, "left": 691.2, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd2", "top": 57.6, "left": 604.2, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd3", "top": 144, "left": 690.6, "attrs": {} }
   ],
   "connections": [
     [ "matrix1:GND", "mega:GND.2", "black", [ "v19.2", "h240" ] ],
@@ -44,7 +74,16 @@
     [ "matrix3:V+", "mega:5V", "green", [ "v57.6", "h-67.2" ] ],
     [ "matrix3:DIN", "mega:13", "green", [ "v-192", "h-192" ] ],
     [ "matrix3:CS", "mega:9", "green", [ "v-220.8", "h-163.2" ] ],
-    [ "matrix3:CLK", "mega:8", "green", [ "v-249.6", "h-163.2" ] ]
+    [ "matrix3:CLK", "mega:8", "green", [ "v-249.6", "h-163.2" ] ],
+    [ "btn4:2.l", "vcc1:VCC", "green", [ "h0" ] ],
+    [ "btn4:1.l", "gnd1:GND", "green", [ "v28.8", "h9.6" ] ],
+    [ "btn1:1.l", "vcc2:VCC", "green", [ "v0" ] ],
+    [ "btn1:2.l", "gnd2:GND", "green", [ "v-19.2", "h57.4", "v48" ] ],
+    [ "btn3:2.l", "vcc3:VCC", "green", [ "h0" ] ],
+    [ "btn3:1.l", "gnd3:GND", "green", [ "h0" ] ],
+    [ "mega:41", "btn1:2.l", "green", [ "v1.85", "h32.2", "v-105.6", "h124.8" ] ],
+    [ "mega:42", "btn4:1.l", "green", [ "v30.5", "h138.2", "v-19.2" ] ],
+    [ "mega:43", "btn3:1.l", "green", [ "v49.7", "h291.4", "v-28.8" ] ]
   ],
   "dependencies": {}
 }

@@ -112,6 +112,20 @@ void fillRowField(Field* field, float y, int tileSize, int gridWidth) {
     }
 }
 
+void unFillRowField(Field* field, float y, int tileSize, int gridWidth) {
+  
+    for(int i = 0; i<(tileSize*gridWidth); i++)
+    {
+      struct Coordinate coord;
+      coord.x = i;
+      coord.y = y;
+      unmapCoordinateFromField(field, coord, tileSize, gridWidth, 1);
+    }
+}
+
+
+
+
 bool isCoordinateSetInField(Field* field, Coordinate coord, int tileSize, int gridWidth, uint8_t toCheck) {
     if (toCheck) {
         uint8_t coordIndex = GetIndexSubField(coord, tileSize, gridWidth);
@@ -151,6 +165,22 @@ int checkCollisions(Coordinate* coord, Field* field, const TetrisBlock* block, i
     }
 
     return 1; // No collisions
+}
+
+int isRowFull(Field* field, float y, int tileSize, int gridWidth) {
+    for (int i = 0; i < gridWidth * 8; i++) {
+        struct Coordinate coord;
+        coord.x = i;
+        coord.y = y;
+        
+        // Check if the coordinate is filled
+        if (!isCoordinateSetInField(field, coord, tileSize, gridWidth,1)) {
+            // If any coordinate in the row is not filled, return 0
+            return 0;
+        }
+    }
+    // If all coordinates in the row are filled, return 1
+    return 1;
 }
 
 
