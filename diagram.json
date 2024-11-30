@@ -57,7 +57,8 @@
     { "type": "wokwi-vcc", "id": "vcc2", "top": -8.84, "left": 604.8, "attrs": {} },
     { "type": "wokwi-vcc", "id": "vcc3", "top": 10.36, "left": 691.2, "attrs": {} },
     { "type": "wokwi-gnd", "id": "gnd2", "top": 57.6, "left": 604.2, "attrs": {} },
-    { "type": "wokwi-gnd", "id": "gnd3", "top": 144, "left": 690.6, "attrs": {} }
+    { "type": "wokwi-gnd", "id": "gnd3", "top": 144, "left": 690.6, "attrs": {} },
+    { "type": "wokwi-mpu6050", "id": "imu2", "top": 272.62, "left": 251.92, "attrs": {} }
   ],
   "connections": [
     [ "matrix1:GND", "mega:GND.2", "black", [ "v19.2", "h240" ] ],
@@ -83,7 +84,11 @@
     [ "btn3:1.l", "gnd3:GND", "green", [ "h0" ] ],
     [ "mega:41", "btn1:2.l", "green", [ "v1.85", "h32.2", "v-105.6", "h124.8" ] ],
     [ "mega:42", "btn4:1.l", "green", [ "v30.5", "h138.2", "v-19.2" ] ],
-    [ "mega:43", "btn3:1.l", "green", [ "v49.7", "h291.4", "v-28.8" ] ]
+    [ "mega:43", "btn3:1.l", "green", [ "v49.7", "h291.4", "v-28.8" ] ],
+    [ "imu2:GND", "mega:GND.3", "black", [ "h0" ] ],
+    [ "imu2:VCC", "mega:VIN", "red", [ "v-19.2", "h-134.32" ] ],
+    [ "imu2:SCL", "mega:21", "green", [ "v-57.6", "h28.88" ] ],
+    [ "imu2:SDA", "mega:20", "green", [ "v-67.2", "h28.88" ] ]
   ],
   "dependencies": {}
 }
