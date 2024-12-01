@@ -18,7 +18,7 @@
       "top": 37.8,
       "left": 502.2,
       "rotate": 90,
-      "attrs": { "color": "green" }
+      "attrs": { "color": "blue" }
     },
     {
       "type": "wokwi-pushbutton",
