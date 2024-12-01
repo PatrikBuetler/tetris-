@@ -2,23 +2,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>   // For seeding the random generator
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <Wire.h>
 
 #define ROTATION_BUTTON_PIN 41
 #define LEFT_BUTTON_PIN 42
 #define RIGHT_BUTTON_PIN 43
 
 #define NUM_DEVICES_PER_LC 4  // Number of devices per LedControl instance
-#define NUM_LCS 3             // Number of LedControl instances
+#define NUM_LCS 1             // Number of LedControl instances
 #define SCREENSPOSITIONING 1
 int gameRunning = 1;
 
+Adafruit_MPU6050 mpu;
+const int threshold = 1;
 
 
 LedControl lc1 = LedControl(12, 10, 11, NUM_DEVICES_PER_LC); // (dataPin, clkPin, csPin, numDevices)
-LedControl lc2 = LedControl(7, 5, 6, NUM_DEVICES_PER_LC);
-LedControl lc3 = LedControl(13, 8, 9, NUM_DEVICES_PER_LC);
+//LedControl lc2 = LedControl(7, 5, 6, NUM_DEVICES_PER_LC);
+//LedControl lc3 = LedControl(13, 8, 9, NUM_DEVICES_PER_LC);
 
-LedControl* ledControls[NUM_LCS] = { &lc1, &lc2, &lc3};
+LedControl* ledControls[NUM_LCS] = { &lc1};//, &lc2, &lc3};
 
 
 struct Coordinate {
@@ -210,7 +215,7 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
 
 
 void setup() {
-
+  mpu.begin();
   pinMode(ROTATION_BUTTON_PIN, INPUT_PULLUP);
   pinMode(LEFT_BUTTON_PIN, INPUT_PULLUP);
   pinMode(RIGHT_BUTTON_PIN, INPUT_PULLUP);
@@ -250,8 +255,9 @@ void setup() {
 }
 
 void loop() {
-  
 
+  
+// -----------------------------------------
   unsigned long lastExecutionTime = 0; 
   const unsigned long delayTime = 250; 
 
@@ -268,6 +274,10 @@ void loop() {
   
   while (gameRunning) 
   {
+    // gyroscope part 
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+
     // basic controls
     // Read the state of each button
     int RotationButtonState = digitalRead(ROTATION_BUTTON_PIN);
@@ -275,19 +285,21 @@ void loop() {
     int RightButtonState = digitalRead(RIGHT_BUTTON_PIN);
 
     // Check each button state and perform actions
-    if (RotationButtonState == HIGH) { // Rotation button pressed
+    if (RotationButtonState == HIGH || abs(g.gyro.x) > threshold) { // Rotation button pressed
         uint8_t tempMapping[9]; 
         rotate90Clockwise(block->mapping, tempMapping, 3);
         memcpy(block->mapping, tempMapping, sizeof(tempMapping));
         delay(100);
+        Serial.print("Rotation detected on X-axis: ");
+        Serial.println(g.gyro.x);
     }
 
-    if (LeftButtonState == HIGH) { // Left button pressed
+    if (LeftButtonState == HIGH || abs(g.gyro.y) > threshold) { // Left button pressed
         moveBlock(block, -1, 0);
        
     } 
 
-    if (RightButtonState == HIGH) { // Right button pressed
+    if (RightButtonState == HIGH || abs(g.gyro.z) > threshold) { // Right button pressed
         moveBlock(block, 1, 0);
     } 
 
@@ -410,7 +422,7 @@ void loop() {
               checkCoord.y = i;
               struct Coordinate unmapCoord;
               unmapCoord.x = j;
-              unmapCoord.y = gapTop;
+              unmapCoord.y = i;
               int toDraw = isCoordinateSetInField(field, checkCoord, 8, NUM_LCS,1);
               mapCoordinateToField(field, setCoord, 8, NUM_LCS,toDraw);
               unmapCoordinateFromField(field, unmapCoord, 8, NUM_LCS,toDraw);
