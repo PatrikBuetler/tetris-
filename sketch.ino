@@ -349,7 +349,7 @@ void loop() {
     unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
     }
     else{
-      int posX = rand() % (20 - 3 + 1) + 3;
+      int posX = rand() % (NUM_LCS*NUM_DEVICES_PER_LC)+3;
       resetBlock(block, posX, 30);
       // Full lines erasure logic
       int lowestRow = -1;  // Initialize to -1 to indicate no row has been cleared yet
