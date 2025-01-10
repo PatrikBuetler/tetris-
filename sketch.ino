@@ -222,7 +222,7 @@ void setup() {
 
   Serial.begin(9600);
   while (!Serial) {}
-  int totalColumns = NUM_DEVICES_PER_LC * NUM_LCS;
+  int totalColumns = NUM_DEVICES_PER_LC * NUM_LCS; // totalColumns is Screens vertical * screens horizontal, 4 x 1 in this case
   field = create_field(totalColumns);
 
   initializeDevices(ledControls, NUM_LCS, NUM_DEVICES_PER_LC);
