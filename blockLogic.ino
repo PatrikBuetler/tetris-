@@ -20,7 +20,11 @@ const uint8_t oBlock[9] = {
   1, 1, 0,
   0, 0, 0
 };
-
+const uint8_t zBlock[9] = {
+  1, 1, 0,
+  0, 1, 1,
+  0, 0, 0
+};
 
 
 void rotate90Clockwise(const uint8_t* src, uint8_t* dest, int N) {
@@ -95,7 +99,14 @@ void setupBlockMapping(char blockType, uint8_t* mapping, int rotation) {
             }
             break;
 
-        
+        case 'z':
+            memcpy(mapping, zBlock, sizeof(zBlock)); // Copy the original block
+            for (int r = 0; r < rotTimes; r++) {
+                uint8_t tempMapping[9];
+                rotate90Clockwise(mapping, tempMapping, 3);
+                memcpy(mapping, tempMapping, sizeof(tempMapping));
+            }
+            break;
 
         default:
             printf("Invalid block type!\n");
