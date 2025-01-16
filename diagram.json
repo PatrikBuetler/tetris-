@@ -42,7 +42,17 @@
     { "type": "wokwi-vcc", "id": "vcc3", "top": 10.36, "left": 691.2, "attrs": {} },
     { "type": "wokwi-gnd", "id": "gnd2", "top": 57.6, "left": 604.2, "attrs": {} },
     { "type": "wokwi-gnd", "id": "gnd3", "top": 144, "left": 690.6, "attrs": {} },
-    { "type": "wokwi-mpu6050", "id": "imu2", "top": 272.62, "left": 251.92, "attrs": {} }
+    { "type": "wokwi-mpu6050", "id": "imu2", "top": 272.62, "left": 251.92, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 213.6,
+      "left": 413,
+      "rotate": 180,
+      "attrs": { "color": "black" }
+    },
+    { "type": "wokwi-gnd", "id": "gnd4", "top": 278.4, "left": 489, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc5", "top": 183.16, "left": 480, "attrs": {} }
   ],
   "connections": [
     [ "matrix1:GND", "mega:GND.2", "black", [ "v19.2", "h240" ] ],
@@ -62,7 +72,10 @@
     [ "imu2:GND", "mega:GND.3", "black", [ "h0" ] ],
     [ "imu2:VCC", "mega:VIN", "red", [ "v-19.2", "h-134.32" ] ],
     [ "imu2:SCL", "mega:21", "green", [ "v-57.6", "h28.88" ] ],
-    [ "imu2:SDA", "mega:20", "green", [ "v-67.2", "h28.88" ] ]
+    [ "imu2:SDA", "mega:20", "green", [ "v-67.2", "h28.88" ] ],
+    [ "vcc5:VCC", "btn2:2.l", "red", [ "v0" ] ],
+    [ "gnd4:GND", "btn2:1.l", "black", [ "v0" ] ],
+    [ "btn2:1.l", "mega:44", "green", [ "h48", "v-124.8" ] ]
   ],
   "dependencies": {}
 }

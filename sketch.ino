@@ -18,6 +18,7 @@
 #define NUM_LCS 1             // Number of LedControl instances
 #define SCREENSPOSITIONING 1
 int gameRunning = 1;
+int gameStarted = 0;
 
 Adafruit_MPU6050 mpu;
 const int threshold = 1;
@@ -223,6 +224,7 @@ void setup() {
   pinMode(ROTATION_BUTTON_PIN, INPUT_PULLUP);
   pinMode(LEFT_BUTTON_PIN, INPUT_PULLUP);
   pinMode(RIGHT_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(START_BUTTON_PIN, INPUT_PULLUP);
 
   Serial.begin(9600);
   while (!Serial) {}
@@ -265,182 +267,212 @@ void loop() {
   unsigned long lastExecutionTime = 0; 
   const unsigned long delayTime = 250; 
 
-  // draw the starting bottom line 
-  fillRowField(field, 0, 8, NUM_LCS);
-  fillRowField(field, 1, 8, NUM_LCS);
-  fillRowField(field, 2, 8, NUM_LCS);
-  //unFillRowField(field, 2, 8, NUM_LCS);
-  Serial.print(isRowFull(field, 2, 8, NUM_LCS));
-  Serial.print(isRowFull(field, 3, 8, NUM_LCS));
-  updateDisplaysSimple(field, ledControls, NUM_LCS);
+  
 
   int toEraseBlock = 1;
+
+  
   
   while (gameRunning) 
   {
-    // gyroscope part 
-    sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
-
-    // basic controls
-    // Read the state of each button
-    int RotationButtonState = digitalRead(ROTATION_BUTTON_PIN);
-    int LeftButtonState = digitalRead(LEFT_BUTTON_PIN);
-    int RightButtonState = digitalRead(RIGHT_BUTTON_PIN);
-
-    // Check each button state and perform actions
-    if (RotationButtonState == HIGH || abs(g.gyro.x) > threshold) { // Rotation button pressed
-        uint8_t tempMapping[9]; 
-        rotate90Clockwise(block->mapping, tempMapping, 3);
-        memcpy(block->mapping, tempMapping, sizeof(tempMapping));
-        delay(100);
-        Serial.print("Rotation detected on X-axis: ");
-        Serial.println(g.gyro.x);
-    }
-
-    if (LeftButtonState == HIGH || abs(g.gyro.y) > threshold) { // Left button pressed
-        moveBlock(block, -1, 0);
-       
-    } 
-
-    if (RightButtonState == HIGH || abs(g.gyro.z) > threshold) { // Right button pressed
-        moveBlock(block, 1, 0);
-    } 
-
-    struct Coordinate dir;
-    dir.x = 0;
-    dir.y = -1;
-
-    struct Coordinate checkCoord;
-    checkCoord.x = block->position.x + dir.x;
-    checkCoord.y = block->position.y + dir.y;
-    
-    if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
+    int StartEndButtonState = digitalRead(START_BUTTON_PIN);
+    Serial.println(StartEndButtonState);
+    if (StartEndButtonState == HIGH && gameStarted == 0)
     {
-      toEraseBlock = 1;
-      moveBlock(block, dir.x, dir.y);
-    }
-    else
-    {
-      toEraseBlock = 0;
-      
-      
-    }
-    
-    mapBlockToField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
-    
-    // fix of the bag with the artifact
-    uint8_t deviceForSecondUpdate = block->visitedFields[1];
-    // this is how to get the lc and device from the coordinate 
-    uint8_t nDev = (deviceForSecondUpdate % NUM_DEVICES_PER_LC);
-    uint8_t nLc = deviceForSecondUpdate / NUM_DEVICES_PER_LC; 
-
-    // Check if the 250 ms delay has passed
-    unsigned long currentTime = millis();
-    if (currentTime - lastExecutionTime >= delayTime) {
-        if (block->visitedFields[1] != block->visitedFields[0]) {
-            setSubfieldToDeviceSimple(field, *ledControls[nLc], nDev, block->visitedFields[1]);
-            
-        }
-        lastExecutionTime = currentTime; // Update the last execution time
-    }
-    
-    // Hardware update
-    updateDisplays(field, ledControls, NUM_LCS);
-    // clearing the exact area the block was cowering
-    if (toEraseBlock == 1)
-    {
-    unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
-    }
-    else{
-      int posX = rand() % (NUM_LCS*NUM_DEVICES_PER_LC)+3;
-      resetBlock(block, posX, 30);
-      // Full lines erasure logic
-      int lowestRow = -1;  // Initialize to -1 to indicate no row has been cleared yet
-      int highestRow = -1;
-
-      for (int line = 0; line < 8 * NUM_DEVICES_PER_LC; line++) {
-          if (line != 0) { // We want to keep the zero row
-              if (isRowFull(field, line, 8, NUM_LCS) == 1) {
-                  unFillRowField(field, line, 8, NUM_LCS);
-
-                  // Update lowest and highest cleared rows
-                  if (lowestRow == -1 || line < lowestRow) {
-                      lowestRow = line; // Update lowest row
-                  }
-                  if (highestRow == -1 || line > highestRow) {
-                      highestRow = line; // Update highest row
-                  }
-              }
-          }
-      }
-
-      // Serial output for debugging
-      Serial.print("Lowest row: ");
-      Serial.println(lowestRow);
-      Serial.print("Highest row: ");
-      Serial.println(highestRow);
-
-      if (highestRow!=-1)
-      {
-        Serial.println("got one");
-        int moveTopIndex = -1;
-        int thereIsOne = 0;
-        for (int i = highestRow+1; i < NUM_DEVICES_PER_LC * 8; i++) 
-        {
-            thereIsOne = 0;
-            for (int j = 0; j < NUM_LCS*8; j++)
-            {
-              struct Coordinate coord;
-              coord.x = j;
-              coord.y = i;
-              if (isCoordinateSetInField(field, coord, 8, NUM_LCS,1) == 1)
-              {
-                thereIsOne = 1;
-              }
-            }
-            if(thereIsOne == 0)
-            {
-              moveTopIndex = i;
-              break;
-            }
-          
-        }
-        Serial.println(moveTopIndex);
-
-        // move everything to the bottom
-        
-        int gapBottom = highestRow+1;
-        int gapTop = moveTopIndex-1;
-        for(int iters = 0; iters< (highestRow - lowestRow) + 1; iters++)
-        {
-          for (int i = gapBottom; i <= gapTop; i++)
-          {
-            for (int j = 0; j < NUM_LCS*8; j++)
-            {
-              struct Coordinate setCoord;
-              setCoord.x = j; 
-              setCoord.y = i-1;
-              struct Coordinate checkCoord;
-              checkCoord.x = j;
-              checkCoord.y = i;
-              struct Coordinate unmapCoord;
-              unmapCoord.x = j;
-              unmapCoord.y = i;
-              int toDraw = isCoordinateSetInField(field, checkCoord, 8, NUM_LCS,1);
-              mapCoordinateToField(field, setCoord, 8, NUM_LCS,toDraw);
-              unmapCoordinateFromField(field, unmapCoord, 8, NUM_LCS,toDraw);
-            }
-          }
-          gapBottom--;
-          gapTop--;
-        }
-      }
-
-      
-
+      gameStarted = 1;
+      resetSubfields(field);
+      // draw the starting bottom line 
+      fillRowField(field, 0, 8, NUM_LCS);
+      fillRowField(field, 1, 8, NUM_LCS);
+      fillRowField(field, 2, 8, NUM_LCS);
+      //unFillRowField(field, 2, 8, NUM_LCS);
+      Serial.print(isRowFull(field, 2, 8, NUM_LCS));
+      Serial.print(isRowFull(field, 3, 8, NUM_LCS));
       updateDisplaysSimple(field, ledControls, NUM_LCS);
+    }
+    if (gameStarted == 0)
+    {
+      struct Coordinate randCoord;
+      randCoord.x = 5;
+      randCoord.y = 15;
 
+      struct Coordinate randCoord2;
+      randCoord2.x = 4;
+      randCoord2.y = 15;
+      
+      //unmapCoordinateFromField(field, randCoord, 8, NUM_LCS, 1);
+      mapCoordinateToField(field, randCoord, 8, NUM_LCS, 1);// NUM_LCS - gridwidth
+      mapCoordinateToField(field, randCoord2, 8, NUM_LCS, 1);
+      updateDisplaysSimple(field, ledControls, NUM_LCS);
+    }
+
+    if(gameStarted == 1)
+    {
+    
+      // gyroscope part 
+      sensors_event_t a, g, temp;
+      mpu.getEvent(&a, &g, &temp);
+
+      // basic controls
+      // Read the state of each button
+      int RotationButtonState = digitalRead(ROTATION_BUTTON_PIN);
+      int LeftButtonState = digitalRead(LEFT_BUTTON_PIN);
+      int RightButtonState = digitalRead(RIGHT_BUTTON_PIN);
+
+      // Check each button state and perform actions
+      if (RotationButtonState == HIGH || abs(g.gyro.x) > threshold) { // Rotation button pressed
+          uint8_t tempMapping[9]; 
+          rotate90Clockwise(block->mapping, tempMapping, 3);
+          memcpy(block->mapping, tempMapping, sizeof(tempMapping));
+          delay(100);
+          Serial.print("Rotation detected on X-axis: ");
+          Serial.println(g.gyro.x);
+      }
+
+      if (LeftButtonState == HIGH || abs(g.gyro.y) > threshold) { // Left button pressed
+          moveBlock(block, -1, 0);
+        
+      } 
+
+      if (RightButtonState == HIGH || abs(g.gyro.z) > threshold) { // Right button pressed
+          moveBlock(block, 1, 0);
+      } 
+
+      struct Coordinate dir;
+      dir.x = 0;
+      dir.y = -1;
+
+      struct Coordinate checkCoord;
+      checkCoord.x = block->position.x + dir.x;
+      checkCoord.y = block->position.y + dir.y;
+      
+      if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
+      {
+        toEraseBlock = 1;
+        moveBlock(block, dir.x, dir.y);
+      }
+      else
+      {
+        toEraseBlock = 0;
+        
+        
+      }
+      
+      mapBlockToField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
+      
+      // fix of the bag with the artifact
+      uint8_t deviceForSecondUpdate = block->visitedFields[1];
+      // this is how to get the lc and device from the coordinate 
+      uint8_t nDev = (deviceForSecondUpdate % NUM_DEVICES_PER_LC);
+      uint8_t nLc = deviceForSecondUpdate / NUM_DEVICES_PER_LC; 
+
+      // Check if the 250 ms delay has passed
+      unsigned long currentTime = millis();
+      if (currentTime - lastExecutionTime >= delayTime) {
+          if (block->visitedFields[1] != block->visitedFields[0]) {
+              setSubfieldToDeviceSimple(field, *ledControls[nLc], nDev, block->visitedFields[1]);
+              
+          }
+          lastExecutionTime = currentTime; // Update the last execution time
+      }
+      
+      // Hardware update
+      updateDisplays(field, ledControls, NUM_LCS);
+      // clearing the exact area the block was cowering
+      if (toEraseBlock == 1)
+      {
+      unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
+      }
+      else{
+        int posX = rand() % (NUM_LCS*NUM_DEVICES_PER_LC)+3;
+        resetBlock(block, posX, 30);
+        // Full lines erasure logic
+        int lowestRow = -1;  // Initialize to -1 to indicate no row has been cleared yet
+        int highestRow = -1;
+
+        for (int line = 0; line < 8 * NUM_DEVICES_PER_LC; line++) {
+            if (line != 0) { // We want to keep the zero row
+                if (isRowFull(field, line, 8, NUM_LCS) == 1) {
+                    unFillRowField(field, line, 8, NUM_LCS);
+
+                    // Update lowest and highest cleared rows
+                    if (lowestRow == -1 || line < lowestRow) {
+                        lowestRow = line; // Update lowest row
+                    }
+                    if (highestRow == -1 || line > highestRow) {
+                        highestRow = line; // Update highest row
+                    }
+                }
+            }
+        }
+
+        // Serial output for debugging
+        Serial.print("Lowest row: ");
+        Serial.println(lowestRow);
+        Serial.print("Highest row: ");
+        Serial.println(highestRow);
+
+        if (highestRow!=-1)
+        {
+          Serial.println("got one");
+          int moveTopIndex = -1;
+          int thereIsOne = 0;
+          for (int i = highestRow+1; i < NUM_DEVICES_PER_LC * 8; i++) 
+          {
+              thereIsOne = 0;
+              for (int j = 0; j < NUM_LCS*8; j++)
+              {
+                struct Coordinate coord;
+                coord.x = j;
+                coord.y = i;
+                if (isCoordinateSetInField(field, coord, 8, NUM_LCS,1) == 1)
+                {
+                  thereIsOne = 1;
+                }
+              }
+              if(thereIsOne == 0)
+              {
+                moveTopIndex = i;
+                break;
+              }
+            
+          }
+          Serial.println(moveTopIndex);
+
+          // move everything to the bottom
+          
+          int gapBottom = highestRow+1;
+          int gapTop = moveTopIndex-1;
+          for(int iters = 0; iters< (highestRow - lowestRow) + 1; iters++)
+          {
+            for (int i = gapBottom; i <= gapTop; i++)
+            {
+              for (int j = 0; j < NUM_LCS*8; j++)
+              {
+                struct Coordinate setCoord;
+                setCoord.x = j; 
+                setCoord.y = i-1;
+                struct Coordinate checkCoord;
+                checkCoord.x = j;
+                checkCoord.y = i;
+                struct Coordinate unmapCoord;
+                unmapCoord.x = j;
+                unmapCoord.y = i;
+                int toDraw = isCoordinateSetInField(field, checkCoord, 8, NUM_LCS,1);
+                mapCoordinateToField(field, setCoord, 8, NUM_LCS,toDraw);
+                unmapCoordinateFromField(field, unmapCoord, 8, NUM_LCS,toDraw);
+              }
+            }
+            gapBottom--;
+            gapTop--;
+          }
+        }
+
+        
+
+        updateDisplaysSimple(field, ledControls, NUM_LCS);
+
+      }
     }
 
       
