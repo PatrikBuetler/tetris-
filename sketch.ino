@@ -63,6 +63,10 @@ typedef struct {
 Field* field = nullptr;
 
 TetrisBlock* block = nullptr;
+TetrisBlock* copyBlock = nullptr;
+
+
+
 
 
 int gameRunnig = 1;
@@ -225,6 +229,7 @@ void setup() {
   pinMode(LEFT_BUTTON_PIN, INPUT_PULLUP);
   pinMode(RIGHT_BUTTON_PIN, INPUT_PULLUP);
   pinMode(START_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
 
   Serial.begin(9600);
   while (!Serial) {}
@@ -257,8 +262,51 @@ void setup() {
   int rotation = 270;
 
   block = setupTetrisBlock(5,16,offsets, 'l', rotation);
+  copyBlock = (TetrisBlock*) malloc(sizeof(TetrisBlock));
+  memcpy(copyBlock, block, sizeof(TetrisBlock));
   print_field_binary(field);
 }
+
+
+struct Coordinate calculateRightFallingCoord(const TetrisBlock* block, Field* field)
+{
+  struct Coordinate dir;
+  dir.x = 0;
+  dir.y = -1;
+
+  struct Coordinate checkCoord;
+  checkCoord.x = block->position.x + dir.x;
+  checkCoord.y = block->position.y + dir.y;
+
+  copyBlock->position.x = block->position.x;
+  copyBlock->position.y = block->position.y;
+
+  // make a copy of the block 
+
+  int flag = 0;
+  while(flag == 0)
+  {
+    if(checkCollisions(&checkCoord,field, copyBlock, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
+    {
+      copyBlock->position.x = checkCoord.x;
+      copyBlock->position.y = checkCoord.y;
+      checkCoord.x = checkCoord.x + dir.x;
+      checkCoord.y = checkCoord.y + dir.y;
+    }
+    else
+    {
+      flag = 1;
+      checkCoord.x = copyBlock->position.x;
+      checkCoord.y = copyBlock->position.y;
+    }
+  }
+
+  copyBlock->position.x = block->position.x;
+  copyBlock->position.y = block->position.y;
+  
+  return checkCoord;
+}
+
 
 void loop() {
 
@@ -270,26 +318,35 @@ void loop() {
   
 
   int toEraseBlock = 1;
-
-  
+  struct Coordinate prevBlockPos;
+  prevBlockPos.x = 0;
+  prevBlockPos.y = 0;
   
   while (gameRunning) 
   {
     int StartEndButtonState = digitalRead(START_BUTTON_PIN);
     Serial.println(StartEndButtonState);
-    if (StartEndButtonState == HIGH && gameStarted == 0)
+    if(StartEndButtonState == HIGH && gameStarted == 1)
     {
-      gameStarted = 1;
-      resetSubfields(field);
-      // draw the starting bottom line 
-      fillRowField(field, 0, 8, NUM_LCS);
-      fillRowField(field, 1, 8, NUM_LCS);
-      fillRowField(field, 2, 8, NUM_LCS);
-      //unFillRowField(field, 2, 8, NUM_LCS);
-      Serial.print(isRowFull(field, 2, 8, NUM_LCS));
-      Serial.print(isRowFull(field, 3, 8, NUM_LCS));
+      gameStarted = 0;
+      clearAllSubfields(field);
+      int posX = rand() % (NUM_LCS*NUM_DEVICES_PER_LC)+3;
+      resetBlock(block, posX, 30);
+      memcpy(copyBlock, block, sizeof(TetrisBlock));
       updateDisplaysSimple(field, ledControls, NUM_LCS);
     }
+    else if (StartEndButtonState == HIGH && gameStarted == 0)
+    {
+      gameStarted = 1;
+      clearAllSubfields(field);
+      // draw the starting bottom line 
+      fillRowField(field, 0, 8, NUM_LCS);
+      
+      //unFillRowField(field, 2, 8, NUM_LCS);
+      updateDisplaysSimple(field, ledControls, NUM_LCS);
+    }
+    
+    // can map the word tetris here
     if (gameStarted == 0)
     {
       struct Coordinate randCoord;
@@ -300,7 +357,7 @@ void loop() {
       randCoord2.x = 4;
       randCoord2.y = 15;
       
-      //unmapCoordinateFromField(field, randCoord, 8, NUM_LCS, 1);
+      clearAllSubfields(field);
       mapCoordinateToField(field, randCoord, 8, NUM_LCS, 1);// NUM_LCS - gridwidth
       mapCoordinateToField(field, randCoord2, 8, NUM_LCS, 1);
       updateDisplaysSimple(field, ledControls, NUM_LCS);
@@ -318,6 +375,7 @@ void loop() {
       int RotationButtonState = digitalRead(ROTATION_BUTTON_PIN);
       int LeftButtonState = digitalRead(LEFT_BUTTON_PIN);
       int RightButtonState = digitalRead(RIGHT_BUTTON_PIN);
+      int DownButtonState = digitalRead(DOWN_BUTTON_PIN);
 
       // Check each button state and perform actions
       if (RotationButtonState == HIGH || abs(g.gyro.x) > threshold) { // Rotation button pressed
@@ -338,13 +396,27 @@ void loop() {
           moveBlock(block, 1, 0);
       } 
 
+      float step = 1;
+      if(DownButtonState == HIGH )
+      {
+        step *=3;
+      }
+
       struct Coordinate dir;
       dir.x = 0;
-      dir.y = -1;
+      dir.y = -1 * step;
 
       struct Coordinate checkCoord;
       checkCoord.x = block->position.x + dir.x;
       checkCoord.y = block->position.y + dir.y;
+
+      struct Coordinate bottomCheckCoord = calculateRightFallingCoord(block, field);
+      
+     Serial.print("Coordinates: (");
+     Serial.print(bottomCheckCoord.x);
+     Serial.print(", ");
+     Serial.print(bottomCheckCoord.y);
+     Serial.println(")");
       
       if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
       {
@@ -354,12 +426,12 @@ void loop() {
       else
       {
         toEraseBlock = 0;
-        
-        
+        block->position.x = bottomCheckCoord.x;
+        block->position.y = bottomCheckCoord.y;
       }
       
       mapBlockToField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
-      
+      //mapCoordinateToField(field, bottomCheckCoord, 8, NUM_LCS, 1);
       // fix of the bag with the artifact
       uint8_t deviceForSecondUpdate = block->visitedFields[1];
       // this is how to get the lc and device from the coordinate 
@@ -386,6 +458,8 @@ void loop() {
       else{
         int posX = rand() % (NUM_LCS*NUM_DEVICES_PER_LC)+3;
         resetBlock(block, posX, 30);
+        memcpy(copyBlock, block, sizeof(TetrisBlock));
+        printBlockMapping3x3(copyBlock);
         // Full lines erasure logic
         int lowestRow = -1;  // Initialize to -1 to indicate no row has been cleared yet
         int highestRow = -1;
@@ -480,4 +554,5 @@ void loop() {
 
   free_field(field);
   free(block);
+  free(copyBlock);
 }

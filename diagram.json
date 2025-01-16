@@ -52,7 +52,17 @@
       "attrs": { "color": "black" }
     },
     { "type": "wokwi-gnd", "id": "gnd4", "top": 278.4, "left": 489, "attrs": {} },
-    { "type": "wokwi-vcc", "id": "vcc5", "top": 183.16, "left": 480, "attrs": {} }
+    { "type": "wokwi-vcc", "id": "vcc5", "top": 183.16, "left": 480, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn5",
+      "top": 143.4,
+      "left": 502.2,
+      "rotate": 90,
+      "attrs": { "color": "blue" }
+    },
+    { "type": "wokwi-gnd", "id": "gnd5", "top": 230.4, "left": 661.8, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc4", "top": 211.96, "left": 710.4, "attrs": {} }
   ],
   "connections": [
     [ "matrix1:GND", "mega:GND.2", "black", [ "v19.2", "h240" ] ],
@@ -75,7 +85,10 @@
     [ "imu2:SDA", "mega:20", "green", [ "v-67.2", "h28.88" ] ],
     [ "vcc5:VCC", "btn2:2.l", "red", [ "v0" ] ],
     [ "gnd4:GND", "btn2:1.l", "black", [ "v0" ] ],
-    [ "btn2:1.l", "mega:44", "green", [ "h48", "v-124.8" ] ]
+    [ "btn2:1.l", "mega:44", "green", [ "h48", "v-124.8" ] ],
+    [ "gnd5:GND", "btn5:2.l", "black", [ "v-38.4", "h-105.6" ] ],
+    [ "btn5:1.l", "vcc4:VCC", "green", [ "v-9.6", "h48", "v28.8" ] ],
+    [ "mega:45", "btn5:2.l", "green", [ "v78", "h45.4" ] ]
   ],
   "dependencies": {}
 }
