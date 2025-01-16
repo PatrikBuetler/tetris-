@@ -9,6 +9,10 @@
 #define ROTATION_BUTTON_PIN 41
 #define LEFT_BUTTON_PIN 42
 #define RIGHT_BUTTON_PIN 43
+#define START_BUTTON_PIN 44
+#define DOWN_BUTTON_PIN 45
+#define SPEAKER_BUTTON_PIN 7
+#define SOUND_BUTTON_PIN 8
 
 #define NUM_DEVICES_PER_LC 4  // Number of devices per LedControl instance
 #define NUM_LCS 1             // Number of LedControl instances
