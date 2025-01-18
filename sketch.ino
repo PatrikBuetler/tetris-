@@ -19,11 +19,7 @@
 #define SCREENSPOSITIONING 1
 int gameRunning = 1;
 int gameStarted = 0;
-
 int score = 0;
-
-
-
 Adafruit_MPU6050 mpu;
 const int threshold = 1;
 
@@ -277,6 +273,7 @@ void brittle(TetrisBlock* block, Field* field) {
   //Serial.print(" and ");
   //Serial.println(block->position.x+2);
   for (int xaxis = block->position.x; xaxis < block->position.x + 3; xaxis++) {
+    //xaxis = xaxis % 8;
     int freeSpace = 0; // Number of free rows below the brittle block
     //int lowestOccupied = block->position.y + 2; // Bottom row of the brittle block
     int highestOccupied = block->position.y-1;    // Top row of the brittle block
@@ -284,7 +281,7 @@ void brittle(TetrisBlock* block, Field* field) {
     
     // Identify the range of the brittle block
     for (int line = block->position.y+2; line > 0; line--) {
-        struct Coordinate coord = {xaxis, line};
+        struct Coordinate coord = {xaxis%8, line};
         if (isCoordinateSetInField(field, coord, 8, NUM_LCS, 1)) {
             if (line >= block->position.y) {
                 size++;
@@ -296,7 +293,7 @@ void brittle(TetrisBlock* block, Field* field) {
     }
     // Calculate free space below the brittle block
     for (int line = highestOccupied-size; line >= 1; line--) {
-        struct Coordinate coord = {xaxis, line};
+        struct Coordinate coord = {xaxis%8, line};
         if (isCoordinateSetInField(field, coord, 8, NUM_LCS, 1)) {
             break; // Stop at the first occupied row
         }
@@ -318,8 +315,8 @@ void brittle(TetrisBlock* block, Field* field) {
     if(freeSpace > 0) {
       // larger blocks have larger size, so more blocks must be moved downwards
       for (int y = 0; y < size; y++) {
-          struct Coordinate unmapCoord = {xaxis, highestOccupied};
-          struct Coordinate setCoord = {xaxis, (highestOccupied - freeSpace - (size-1)+(y))};
+          struct Coordinate unmapCoord = {xaxis%8, highestOccupied};
+          struct Coordinate setCoord = {xaxis%8, (highestOccupied - freeSpace - (size-1)+(y))};
           //int toDraw = isCoordinateSetInField(field, unmapCoord, 8, NUM_LCS, 1);
           //Serial.print("Unmap block at x=");
           //Serial.print(xaxis);
@@ -390,14 +387,11 @@ void setup() {
   };
   int rotation = 270;
 
-
   block = setupTetrisBlock(22,24,offsets, 'l', rotation);
-
   copyBlock = (TetrisBlock*) malloc(sizeof(TetrisBlock));
   memcpy(copyBlock, block, sizeof(TetrisBlock));
   print_field_binary(field);
 }
-
 
 struct Coordinate calculateRightFallingCoord(const TetrisBlock* block, Field* field)
 {
@@ -456,9 +450,7 @@ void loop() {
   while (gameRunning) 
   {
     int StartEndButtonState = digitalRead(START_BUTTON_PIN);
-
     //Serial.println(StartEndButtonState);
-
     if(StartEndButtonState == HIGH && gameStarted == 1)
     {
       gameStarted = 0;
@@ -518,7 +510,6 @@ void loop() {
           delay(100);
           Serial.print("Rotation detected on X-axis: ");
           Serial.println(g.gyro.x);
-
       }
 
       if (LeftButtonState == HIGH || abs(g.gyro.y) > threshold) { // Left button pressed
@@ -554,7 +545,6 @@ void loop() {
       
       if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
       {
-
         toEraseBlock = 1;
         moveBlock(block, dir.x, dir.y);
       }
@@ -591,7 +581,6 @@ void loop() {
       {
       unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
       }
-
       // block hit bottom
       else{
         // Check and handle special block types
@@ -646,7 +635,6 @@ void loop() {
           score += 1;
           Serial.print("got one, score=");
           Serial.println(score);
-
           int moveTopIndex = -1;
           int thereIsOne = 0;
           for (int i = highestRow+1; i < NUM_DEVICES_PER_LC * 8; i++) 
@@ -669,9 +657,7 @@ void loop() {
               }
             
           }
-
           //Serial.println(moveTopIndex);
-
 
           // move everything to the bottom
           
