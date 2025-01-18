@@ -19,7 +19,11 @@
 #define SCREENSPOSITIONING 1
 int gameRunning = 1;
 int gameStarted = 0;
+
 int score = 0;
+
+
+
 Adafruit_MPU6050 mpu;
 const int threshold = 1;
 
@@ -386,11 +390,14 @@ void setup() {
   };
   int rotation = 270;
 
+
   block = setupTetrisBlock(22,24,offsets, 'l', rotation);
+
   copyBlock = (TetrisBlock*) malloc(sizeof(TetrisBlock));
   memcpy(copyBlock, block, sizeof(TetrisBlock));
   print_field_binary(field);
 }
+
 
 struct Coordinate calculateRightFallingCoord(const TetrisBlock* block, Field* field)
 {
@@ -449,7 +456,9 @@ void loop() {
   while (gameRunning) 
   {
     int StartEndButtonState = digitalRead(START_BUTTON_PIN);
+
     //Serial.println(StartEndButtonState);
+
     if(StartEndButtonState == HIGH && gameStarted == 1)
     {
       gameStarted = 0;
@@ -509,6 +518,7 @@ void loop() {
           delay(100);
           Serial.print("Rotation detected on X-axis: ");
           Serial.println(g.gyro.x);
+
       }
 
       if (LeftButtonState == HIGH || abs(g.gyro.y) > threshold) { // Left button pressed
@@ -544,6 +554,7 @@ void loop() {
       
       if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
       {
+
         toEraseBlock = 1;
         moveBlock(block, dir.x, dir.y);
       }
@@ -580,6 +591,7 @@ void loop() {
       {
       unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
       }
+
       // block hit bottom
       else{
         // Check and handle special block types
@@ -634,6 +646,7 @@ void loop() {
           score += 1;
           Serial.print("got one, score=");
           Serial.println(score);
+
           int moveTopIndex = -1;
           int thereIsOne = 0;
           for (int i = highestRow+1; i < NUM_DEVICES_PER_LC * 8; i++) 
@@ -656,7 +669,9 @@ void loop() {
               }
             
           }
+
           //Serial.println(moveTopIndex);
+
 
           // move everything to the bottom
           
