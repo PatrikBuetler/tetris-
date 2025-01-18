@@ -20,6 +20,10 @@
 int gameRunning = 1;
 int gameStarted = 0;
 
+int score = 0;
+
+
+
 Adafruit_MPU6050 mpu;
 const int threshold = 1;
 
@@ -43,6 +47,7 @@ typedef struct {
     uint8_t currentField;
     uint8_t mapping[9];
     uint8_t visitedFields[2];
+    char specialType[5];
 } TetrisBlock;
 
 
@@ -210,9 +215,28 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
   block->position.y = posY;
 
   // Randomly select a block type
-  const char blockTypes[] = {'t', 'i', 'o', 'l'};
+  const char blockTypes[] = {'t', 'i', 'o', 'l', 'z'};
   const int numBlockTypes = sizeof(blockTypes) / sizeof(blockTypes[0]);
   char randomBlockType = blockTypes[rand() % numBlockTypes];
+  
+  // Randomly select a special block type
+  const int weights[] = {70, 20, 10}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
+  int totalWeight = 100;
+  const char specialBlockTypes[][5] = {"norm\0", "brit\0", "expl\0"}; // Normal, Brittle or Explosive
+  const int numSpecialBlockTypes = sizeof(weights) / sizeof(weights[0]);
+  // Generate a random number between 0 and totalWeight - 1
+  int randomValue = rand() % totalWeight;
+  // Determine which special block type corresponds to the random value
+  int runningSum = 0;
+  for (int i = 0; i < numSpecialBlockTypes; i++) {
+      runningSum += weights[i];
+      if (randomValue < runningSum) {
+        strcpy(block->specialType, specialBlockTypes[i]); // Copy the string to block->specialType
+        Serial.print("Block type generated as: ");
+        Serial.println(block->specialType);
+        break;
+      }
+  }
 
   // Randomly select a rotation (0, 90, 180, or 270 degrees)
   int randomRotation = (rand() % 4) * 90; // Random multiple of 90 degrees
@@ -221,7 +245,112 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
   block->rotation = randomRotation;
   setupBlockMapping(randomBlockType, block->mapping, randomRotation);
 }
+int countBlockHeight(TetrisBlock* block) {
+    int height = 0;
+    for(int row=0; row<3; row++) {
+      for(int col=0; col<3; col++) {
+          if (block->mapping[row * 3 + col] != 0) {
+            height++;
+            break; // go to next row;
+        }
+      }
+    }
+    return height;
+}
 
+void explode(TetrisBlock* block, Field* field) {
+  //Serial.print("Explodes y=");
+  //Serial.println(block->position.y);
+  printArray(block->mapping,9);
+  int height = countBlockHeight(block);
+  score += height-1; // Score is only increment once, so +1 score even though we clear more rows. 
+  //Serial.print("Height = ");
+  //Serial.println(height);
+  for (int h=0; h<height; h++) {
+    fillRowField(field, block->position.y+h, 8, NUM_LCS);
+  }
+}
+
+void brittle(TetrisBlock* block, Field* field) {
+  //Serial.print("Breaking x axis between ");
+  //Serial.print(block->position.x);
+  //Serial.print(" and ");
+  //Serial.println(block->position.x+2);
+  for (int xaxis = block->position.x; xaxis < block->position.x + 3; xaxis++) {
+    int freeSpace = 0; // Number of free rows below the brittle block
+    //int lowestOccupied = block->position.y + 2; // Bottom row of the brittle block
+    int highestOccupied = block->position.y-1;    // Top row of the brittle block
+    int size = 0; // size of the brittle block, move 1, 2 or 3 pixels downards?
+    
+    // Identify the range of the brittle block
+    for (int line = block->position.y+2; line > 0; line--) {
+        struct Coordinate coord = {xaxis, line};
+        if (isCoordinateSetInField(field, coord, 8, NUM_LCS, 1)) {
+            if (line >= block->position.y) {
+                size++;
+            }
+            if (line >= block->position.y && line > highestOccupied) {
+                highestOccupied = line;
+            }
+        }
+    }
+    // Calculate free space below the brittle block
+    for (int line = highestOccupied-size; line >= 1; line--) {
+        struct Coordinate coord = {xaxis, line};
+        if (isCoordinateSetInField(field, coord, 8, NUM_LCS, 1)) {
+            break; // Stop at the first occupied row
+        }
+        freeSpace++;
+    }
+
+    // Debugging output
+    //Serial.print("Brittle! at X axis = ");
+    //Serial.print(xaxis);
+    //Serial.print(" Free space below: ");
+    //Serial.print(freeSpace);
+    //Serial.print(", Highest occupied row: ");
+    //Serial.print(highestOccupied);
+    //Serial.print(", size: ");
+    //Serial.print(size);
+    //Serial.println();
+
+    // Move blocks downward
+    if(freeSpace > 0) {
+      // larger blocks have larger size, so more blocks must be moved downwards
+      for (int y = 0; y < size; y++) {
+          struct Coordinate unmapCoord = {xaxis, highestOccupied};
+          struct Coordinate setCoord = {xaxis, (highestOccupied - freeSpace - (size-1)+(y))};
+          //int toDraw = isCoordinateSetInField(field, unmapCoord, 8, NUM_LCS, 1);
+          //Serial.print("Unmap block at x=");
+          //Serial.print(xaxis);
+          //Serial.print(" y=");
+          //Serial.println(highestOccupied);
+          //Serial.print("Mapped to x=");
+          //Serial.print(xaxis);
+          //Serial.print(" y=");
+          //Serial.print(highestOccupied - freeSpace - (size-1)+(y));
+          //Serial.print(" original y was =");
+          //Serial.println(block->position.y);
+          // Move the block if the destination is free
+          if (isCoordinateSetInField(field, setCoord, 8, NUM_LCS,1) == 0)
+                {
+                  mapCoordinateToField(field, setCoord, 8, NUM_LCS, 1);
+                  unmapCoordinateFromField(field, unmapCoord, 8, NUM_LCS, 1);
+                  highestOccupied -= 1;
+                  freeSpace -= 1;
+                }
+          else {
+            break;
+          }
+          // check if done
+          if(freeSpace == 0) {
+            break;
+          }
+      }
+    }
+  }
+  updateDisplaysSimple(field, ledControls, NUM_LCS);
+}
 
 void setup() {
   mpu.begin();
@@ -233,7 +362,7 @@ void setup() {
 
   Serial.begin(9600);
   while (!Serial) {}
-  int totalColumns = NUM_DEVICES_PER_LC * NUM_LCS;
+  int totalColumns = NUM_DEVICES_PER_LC * NUM_LCS; // totalColumns is Screens vertical * screens horizontal, 4 x 1 in this case
   field = create_field(totalColumns);
 
   initializeDevices(ledControls, NUM_LCS, NUM_DEVICES_PER_LC);
@@ -261,7 +390,9 @@ void setup() {
   };
   int rotation = 270;
 
-  block = setupTetrisBlock(5,16,offsets, 'l', rotation);
+
+  block = setupTetrisBlock(22,24,offsets, 'l', rotation);
+
   copyBlock = (TetrisBlock*) malloc(sizeof(TetrisBlock));
   memcpy(copyBlock, block, sizeof(TetrisBlock));
   print_field_binary(field);
@@ -325,7 +456,9 @@ void loop() {
   while (gameRunning) 
   {
     int StartEndButtonState = digitalRead(START_BUTTON_PIN);
-    Serial.println(StartEndButtonState);
+
+    //Serial.println(StartEndButtonState);
+
     if(StartEndButtonState == HIGH && gameStarted == 1)
     {
       gameStarted = 0;
@@ -385,6 +518,7 @@ void loop() {
           delay(100);
           Serial.print("Rotation detected on X-axis: ");
           Serial.println(g.gyro.x);
+
       }
 
       if (LeftButtonState == HIGH || abs(g.gyro.y) > threshold) { // Left button pressed
@@ -412,14 +546,15 @@ void loop() {
 
       struct Coordinate bottomCheckCoord = calculateRightFallingCoord(block, field);
       
-     Serial.print("Coordinates: (");
-     Serial.print(bottomCheckCoord.x);
-     Serial.print(", ");
-     Serial.print(bottomCheckCoord.y);
-     Serial.println(")");
+     //Serial.print("Coordinates: (");
+     //Serial.print(bottomCheckCoord.x);
+     //Serial.print(", ");
+     //Serial.print(bottomCheckCoord.y);
+     //Serial.println(")");
       
       if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
       {
+
         toEraseBlock = 1;
         moveBlock(block, dir.x, dir.y);
       }
@@ -428,6 +563,7 @@ void loop() {
         toEraseBlock = 0;
         block->position.x = bottomCheckCoord.x;
         block->position.y = bottomCheckCoord.y;
+
       }
       
       mapBlockToField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
@@ -455,7 +591,26 @@ void loop() {
       {
       unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
       }
+
+      // block hit bottom
       else{
+        // Check and handle special block types
+        if (strcmp(block->specialType, "brit") == 0) {
+          Serial.print("Block stopped. Type was ");
+          Serial.println(block->specialType);
+          brittle(block, field);
+        }
+        else if (strcmp(block->specialType, "expl") == 0) {
+          Serial.print("Block stopped. Type was ");
+          Serial.println(block->specialType);
+          // first iteration of explosion: unmap the block, it explodes only itself
+          explode(block, field);
+          //unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
+          
+          // clear blocks in the same row, can comment out and create explosion around block too
+        }
+
+        // <-- this part happens for every block -->
         int posX = rand() % (NUM_LCS*NUM_DEVICES_PER_LC)+3;
         resetBlock(block, posX, 30);
         memcpy(copyBlock, block, sizeof(TetrisBlock));
@@ -481,14 +636,17 @@ void loop() {
         }
 
         // Serial output for debugging
-        Serial.print("Lowest row: ");
-        Serial.println(lowestRow);
-        Serial.print("Highest row: ");
-        Serial.println(highestRow);
+        //Serial.print("Lowest row: ");
+        //Serial.println(lowestRow);
+        //Serial.print("Highest row: ");
+        //Serial.println(highestRow);
 
         if (highestRow!=-1)
         {
-          Serial.println("got one");
+          score += 1;
+          Serial.print("got one, score=");
+          Serial.println(score);
+
           int moveTopIndex = -1;
           int thereIsOne = 0;
           for (int i = highestRow+1; i < NUM_DEVICES_PER_LC * 8; i++) 
@@ -511,7 +669,9 @@ void loop() {
               }
             
           }
-          Serial.println(moveTopIndex);
+
+          //Serial.println(moveTopIndex);
+
 
           // move everything to the bottom
           
