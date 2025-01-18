@@ -5,27 +5,27 @@ const uint8_t tBlock[9] = {
 };
 
 const uint8_t iBlock[9] = {
-  1, 1, 1,
   0, 0, 0,
-  0, 0, 0
+  0, 0, 0,
+  1, 1, 1
 };
 
 const uint8_t lBlock[9] = {
+  0, 0, 0,
   1, 0, 0,
-  1, 1, 1,
-  0, 0, 0
+  1, 1, 1
 };
 const uint8_t oBlock[9] = {
+  0, 0, 0,
   1, 1, 0,
-  1, 1, 0,
-  0, 0, 0
-};
-const uint8_t zBlock[9] = {
-  1, 1, 0,
-  0, 1, 1,
-  0, 0, 0
+  1, 1, 0
 };
 
+const uint8_t zBlock[9] = {
+  0, 0, 0,
+  0, 1, 1,
+  1, 1, 0
+};
 
 void rotate90Clockwise(const uint8_t* src, uint8_t* dest, int N) {
     for (int i = 0; i < N; ++i) {
@@ -99,7 +99,7 @@ void setupBlockMapping(char blockType, uint8_t* mapping, int rotation) {
             }
             break;
 
-        case 'z':
+          case 'z':
             memcpy(mapping, zBlock, sizeof(zBlock)); // Copy the original block
             for (int r = 0; r < rotTimes; r++) {
                 uint8_t tempMapping[9];
@@ -113,7 +113,6 @@ void setupBlockMapping(char blockType, uint8_t* mapping, int rotation) {
             break;
     }
 }
-
 
 
 TetrisBlock* setupTetrisBlock(float posX, float posY, Coordinate offsets[], char blockType, int rotation) {

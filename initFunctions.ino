@@ -204,6 +204,20 @@ void resetSubfields(Field *field) {
     }
 }
 
+void clearAllSubfields(Field* field) {
+    if (!field || !field->subfields) {
+        return; // Nothing to clear if the Field or subfields pointer is NULL
+    }
+
+    // Iterate over each subfield
+    for (int i = 0; i < field->num_subfields; i++) {
+        if (field->subfields[i] != NULL) {
+            // If each subfield is 8 bytes, set all 8 to zero
+            memset(field->subfields[i], 0, 8 * sizeof(uint8_t));
+        }
+    }
+}
+
 uint8_t findLeastPrevailing(uint8_t arr[], int size) {
     int count[256] = {0}; // Array to store counts for each possible uint8_t value (0-255)
 
@@ -246,4 +260,26 @@ uint8_t findMostPrevailing(uint8_t arr[], int size) {
     }
 
     return mostPrevailing;
+}
+
+void printBlockMapping3x3(const TetrisBlock* block) {
+    if (block == NULL) {
+        Serial.println("Block pointer is NULL.");
+        return;
+    }
+
+    Serial.println("Block mapping (3x3):");
+    for (int row = 0; row < 3; ++row) {
+        for (int col = 0; col < 3; ++col) {
+            int index = row * 3 + col;
+            // If mapping[index] is non-zero, print 'X'; otherwise '.'
+            if (block->mapping[index] != 0) {
+                Serial.print("X ");
+            } else {
+                Serial.print(". ");
+            }
+        }
+        Serial.println(); // new line after each row
+    }
+    Serial.println(); // extra blank line at the end
 }
