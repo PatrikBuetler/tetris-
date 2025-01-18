@@ -216,7 +216,7 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
   char randomBlockType = blockTypes[rand() % numBlockTypes];
   
   // Randomly select a special block type
-  const int weights[] = {70, 15, 15}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
+  const int weights[] = {70, 20, 10}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
   int totalWeight = 100;
   const char specialBlockTypes[][5] = {"norm\0", "brit\0", "expl\0"}; // Normal, Brittle or Explosive
   const int numSpecialBlockTypes = sizeof(weights) / sizeof(weights[0]);
@@ -255,23 +255,23 @@ int countBlockHeight(TetrisBlock* block) {
 }
 
 void explode(TetrisBlock* block, Field* field) {
-  Serial.print("Explodes y=");
-  Serial.println(block->position.y);
+  //Serial.print("Explodes y=");
+  //Serial.println(block->position.y);
   printArray(block->mapping,9);
   int height = countBlockHeight(block);
   score += height-1; // Score is only increment once, so +1 score even though we clear more rows. 
-  Serial.print("Height = ");
-  Serial.println(height);
+  //Serial.print("Height = ");
+  //Serial.println(height);
   for (int h=0; h<height; h++) {
     fillRowField(field, block->position.y+h, 8, NUM_LCS);
   }
 }
 
 void brittle(TetrisBlock* block, Field* field) {
-  Serial.print("Breaking x axis between ");
-  Serial.print(block->position.x);
-  Serial.print(" and ");
-  Serial.println(block->position.x+2);
+  //Serial.print("Breaking x axis between ");
+  //Serial.print(block->position.x);
+  //Serial.print(" and ");
+  //Serial.println(block->position.x+2);
   for (int xaxis = block->position.x; xaxis < block->position.x + 3; xaxis++) {
     int freeSpace = 0; // Number of free rows below the brittle block
     //int lowestOccupied = block->position.y + 2; // Bottom row of the brittle block
@@ -300,15 +300,15 @@ void brittle(TetrisBlock* block, Field* field) {
     }
 
     // Debugging output
-    Serial.print("Brittle! at X axis = ");
-    Serial.print(xaxis);
-    Serial.print(" Free space below: ");
-    Serial.print(freeSpace);
-    Serial.print(", Highest occupied row: ");
-    Serial.print(highestOccupied);
-    Serial.print(", size: ");
-    Serial.print(size);
-    Serial.println();
+    //Serial.print("Brittle! at X axis = ");
+    //Serial.print(xaxis);
+    //Serial.print(" Free space below: ");
+    //Serial.print(freeSpace);
+    //Serial.print(", Highest occupied row: ");
+    //Serial.print(highestOccupied);
+    //Serial.print(", size: ");
+    //Serial.print(size);
+    //Serial.println();
 
     // Move blocks downward
     if(freeSpace > 0) {
@@ -317,16 +317,16 @@ void brittle(TetrisBlock* block, Field* field) {
           struct Coordinate unmapCoord = {xaxis, highestOccupied};
           struct Coordinate setCoord = {xaxis, (highestOccupied - freeSpace - (size-1)+(y))};
           //int toDraw = isCoordinateSetInField(field, unmapCoord, 8, NUM_LCS, 1);
-          Serial.print("Unmap block at x=");
-          Serial.print(xaxis);
-          Serial.print(" y=");
-          Serial.println(highestOccupied);
-          Serial.print("Mapped to x=");
-          Serial.print(xaxis);
-          Serial.print(" y=");
-          Serial.print(highestOccupied - freeSpace - (size-1)+(y));
-          Serial.print(" original y was =");
-          Serial.println(block->position.y);
+          //Serial.print("Unmap block at x=");
+          //Serial.print(xaxis);
+          //Serial.print(" y=");
+          //Serial.println(highestOccupied);
+          //Serial.print("Mapped to x=");
+          //Serial.print(xaxis);
+          //Serial.print(" y=");
+          //Serial.print(highestOccupied - freeSpace - (size-1)+(y));
+          //Serial.print(" original y was =");
+          //Serial.println(block->position.y);
           // Move the block if the destination is free
           if (isCoordinateSetInField(field, setCoord, 8, NUM_LCS,1) == 0)
                 {
@@ -344,7 +344,7 @@ void brittle(TetrisBlock* block, Field* field) {
           }
       }
     }
-}
+  }
   updateDisplaysSimple(field, ledControls, NUM_LCS);
 }
 

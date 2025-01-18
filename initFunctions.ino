@@ -66,13 +66,6 @@ void free_field(Field *field) {
     free(field);
 }
 
-
-
-
-
-
-
-
 // Function to reverse a subarray from index 'start' to 'end'
 void reverseSubarray(uint8_t* array, int start, int end) {
     while (start < end) {
