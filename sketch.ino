@@ -462,8 +462,8 @@ void loop() {
       clearAllSubfields(field);
       // draw the starting bottom line 
       fillRowField(field, 0, 8, NUM_LCS);
-      fillRowField(field, 1, 8, NUM_LCS);
-      fillRowField(field, 2, 8, NUM_LCS);
+      //fillRowField(field, 1, 8, NUM_LCS);
+      //fillRowField(field, 2, 8, NUM_LCS);
       
       //unFillRowField(field, 2, 8, NUM_LCS);
       Serial.print(isRowFull(field, 2, 8, NUM_LCS));
@@ -632,7 +632,9 @@ void loop() {
 
         if (highestRow!=-1)
         {
-          //Serial.println("got one");
+          score += 1;
+          Serial.print("got one, score=");
+          Serial.println(score);
           int moveTopIndex = -1;
           int thereIsOne = 0;
           for (int i = highestRow+1; i < NUM_DEVICES_PER_LC * 8; i++) 
