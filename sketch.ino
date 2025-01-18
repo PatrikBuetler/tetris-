@@ -20,6 +20,7 @@
 int gameRunning = 1;
 int gameStarted = 0;
 int score = 0;
+
 Adafruit_MPU6050 mpu;
 const int threshold = 1;
 
@@ -56,7 +57,7 @@ typedef struct {
   uint8_t **subfields; // Double pointer to uint8_t
   uint8_t *coordinateIndices;
   uint8_t activeField[9];
-  
+
 
 } Field;
 
@@ -65,9 +66,6 @@ Field* field = nullptr;
 
 TetrisBlock* block = nullptr;
 TetrisBlock* copyBlock = nullptr;
-
-
-
 
 
 int gameRunnig = 1;
@@ -108,7 +106,7 @@ void setSubfieldToDevice(Field* field, LedControl& lc, int device, int subfieldI
             isActive = true;
             break;
         }
-       
+
     }
 
     if (!isActive) {
@@ -120,7 +118,7 @@ void setSubfieldToDevice(Field* field, LedControl& lc, int device, int subfieldI
     for (int col = 0; col < 8; col++) {
         lc.setColumn(device, col, field->subfields[subfieldIndex][col]);
     }
-    
+
 }
 
 void updateDisplays(Field* field, LedControl* ledControls[], int numLCs) {
@@ -128,7 +126,7 @@ void updateDisplays(Field* field, LedControl* ledControls[], int numLCs) {
   int device = 0;
   int bound = NUM_DEVICES_PER_LC;
 
-  
+
   for (int lc = 0; lc < numLCs; lc++) {
     for (; subField < bound; subField++) {
       setSubfieldToDevice(field, *ledControls[lc], device, subField);
@@ -145,7 +143,7 @@ void updateDisplaysSimple(Field* field, LedControl* ledControls[], int numLCs) {
   int device = 0;
   int bound = NUM_DEVICES_PER_LC;
 
-  
+
   for (int lc = 0; lc < numLCs; lc++) {
     for (; subField < bound; subField++) {
       setSubfieldToDeviceSimple(field, *ledControls[lc], device, subField);
@@ -241,6 +239,7 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
   block->rotation = randomRotation;
   setupBlockMapping(randomBlockType, block->mapping, randomRotation);
 }
+
 int countBlockHeight(TetrisBlock* block) {
     int height = 0;
     for(int row=0; row<3; row++) {
@@ -349,6 +348,7 @@ void brittle(TetrisBlock* block, Field* field) {
   updateDisplaysSimple(field, ledControls, NUM_LCS);
 }
 
+
 void setup() {
   mpu.begin();
   pinMode(ROTATION_BUTTON_PIN, INPUT_PULLUP);
@@ -359,21 +359,21 @@ void setup() {
 
   Serial.begin(9600);
   while (!Serial) {}
-  int totalColumns = NUM_DEVICES_PER_LC * NUM_LCS; // totalColumns is Screens vertical * screens horizontal, 4 x 1 in this case
+  int totalColumns = NUM_DEVICES_PER_LC * NUM_LCS;
   field = create_field(totalColumns);
 
   initializeDevices(ledControls, NUM_LCS, NUM_DEVICES_PER_LC);
 
-  
+
   processArray(field->coordinateIndices, totalColumns);
   transformCoordinatesForMapping(field->coordinateIndices,totalColumns,NUM_DEVICES_PER_LC);
-  
-  
+
+
   printArray(field->coordinateIndices, 12);
 
   // like so far all the action is here__________________________
- 
-  
+
+
   struct Coordinate offsets[9] = {
       {0.0f, 0.0f},
       {1.0f, 0.0f},
@@ -398,16 +398,12 @@ struct Coordinate calculateRightFallingCoord(const TetrisBlock* block, Field* fi
   struct Coordinate dir;
   dir.x = 0;
   dir.y = -1;
-
   struct Coordinate checkCoord;
   checkCoord.x = block->position.x + dir.x;
   checkCoord.y = block->position.y + dir.y;
-
   copyBlock->position.x = block->position.x;
   copyBlock->position.y = block->position.y;
-
   // make a copy of the block 
-
   int flag = 0;
   while(flag == 0)
   {
@@ -425,32 +421,31 @@ struct Coordinate calculateRightFallingCoord(const TetrisBlock* block, Field* fi
       checkCoord.y = copyBlock->position.y;
     }
   }
-
   copyBlock->position.x = block->position.x;
   copyBlock->position.y = block->position.y;
   
   return checkCoord;
 }
-
-
 void loop() {
 
-  
+
 // -----------------------------------------
   unsigned long lastExecutionTime = 0; 
   const unsigned long delayTime = 250; 
 
-  
+
 
   int toEraseBlock = 1;
+  
   struct Coordinate prevBlockPos;
   prevBlockPos.x = 0;
   prevBlockPos.y = 0;
-  
+
   while (gameRunning) 
   {
     int StartEndButtonState = digitalRead(START_BUTTON_PIN);
     //Serial.println(StartEndButtonState);
+    if (StartEndButtonState == HIGH && gameStarted == 0)
     if(StartEndButtonState == HIGH && gameStarted == 1)
     {
       gameStarted = 0;
@@ -463,11 +458,16 @@ void loop() {
     else if (StartEndButtonState == HIGH && gameStarted == 0)
     {
       gameStarted = 1;
+      resetSubfields(field);
       clearAllSubfields(field);
       // draw the starting bottom line 
       fillRowField(field, 0, 8, NUM_LCS);
+      fillRowField(field, 1, 8, NUM_LCS);
+      fillRowField(field, 2, 8, NUM_LCS);
       
       //unFillRowField(field, 2, 8, NUM_LCS);
+      Serial.print(isRowFull(field, 2, 8, NUM_LCS));
+      Serial.print(isRowFull(field, 3, 8, NUM_LCS));
       updateDisplaysSimple(field, ledControls, NUM_LCS);
     }
     
@@ -481,7 +481,8 @@ void loop() {
       struct Coordinate randCoord2;
       randCoord2.x = 4;
       randCoord2.y = 15;
-      
+
+      //unmapCoordinateFromField(field, randCoord, 8, NUM_LCS, 1);
       clearAllSubfields(field);
       mapCoordinateToField(field, randCoord, 8, NUM_LCS, 1);// NUM_LCS - gridwidth
       mapCoordinateToField(field, randCoord2, 8, NUM_LCS, 1);
@@ -490,7 +491,7 @@ void loop() {
 
     if(gameStarted == 1)
     {
-    
+
       // gyroscope part 
       sensors_event_t a, g, temp;
       mpu.getEvent(&a, &g, &temp);
@@ -514,7 +515,7 @@ void loop() {
 
       if (LeftButtonState == HIGH || abs(g.gyro.y) > threshold) { // Left button pressed
           moveBlock(block, -1, 0);
-        
+
       } 
 
       if (RightButtonState == HIGH || abs(g.gyro.z) > threshold) { // Right button pressed
@@ -526,15 +527,14 @@ void loop() {
       {
         step *=3;
       }
-
       struct Coordinate dir;
       dir.x = 0;
+      dir.y = -1;
       dir.y = -1 * step;
 
       struct Coordinate checkCoord;
       checkCoord.x = block->position.x + dir.x;
       checkCoord.y = block->position.y + dir.y;
-
       struct Coordinate bottomCheckCoord = calculateRightFallingCoord(block, field);
       
      //Serial.print("Coordinates: (");
@@ -542,7 +542,7 @@ void loop() {
      //Serial.print(", ");
      //Serial.print(bottomCheckCoord.y);
      //Serial.println(")");
-      
+
       if(checkCollisions(&checkCoord,field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8)==1)
       {
         toEraseBlock = 1;
@@ -551,12 +551,14 @@ void loop() {
       else
       {
         toEraseBlock = 0;
+        
+        
         block->position.x = bottomCheckCoord.x;
         block->position.y = bottomCheckCoord.y;
-
       }
-      
+
       mapBlockToField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
+      
       //mapCoordinateToField(field, bottomCheckCoord, 8, NUM_LCS, 1);
       // fix of the bag with the artifact
       uint8_t deviceForSecondUpdate = block->visitedFields[1];
@@ -569,11 +571,11 @@ void loop() {
       if (currentTime - lastExecutionTime >= delayTime) {
           if (block->visitedFields[1] != block->visitedFields[0]) {
               setSubfieldToDeviceSimple(field, *ledControls[nLc], nDev, block->visitedFields[1]);
-              
+
           }
           lastExecutionTime = currentTime; // Update the last execution time
       }
-      
+
       // Hardware update
       updateDisplays(field, ledControls, NUM_LCS);
       // clearing the exact area the block was cowering
@@ -581,9 +583,8 @@ void loop() {
       {
       unmapBlockFromField(field, block, 8, NUM_LCS, NUM_LCS * 8, NUM_DEVICES_PER_LC * 8);
       }
-      // block hit bottom
       else{
-        // Check and handle special block types
+
         if (strcmp(block->specialType, "brit") == 0) {
           Serial.print("Block stopped. Type was ");
           Serial.println(block->specialType);
@@ -599,7 +600,6 @@ void loop() {
           // clear blocks in the same row, can comment out and create explosion around block too
         }
 
-        // <-- this part happens for every block -->
         int posX = rand() % (NUM_LCS*NUM_DEVICES_PER_LC)+3;
         resetBlock(block, posX, 30);
         memcpy(copyBlock, block, sizeof(TetrisBlock));
@@ -632,9 +632,7 @@ void loop() {
 
         if (highestRow!=-1)
         {
-          score += 1;
-          Serial.print("got one, score=");
-          Serial.println(score);
+          //Serial.println("got one");
           int moveTopIndex = -1;
           int thereIsOne = 0;
           for (int i = highestRow+1; i < NUM_DEVICES_PER_LC * 8; i++) 
@@ -655,12 +653,12 @@ void loop() {
                 moveTopIndex = i;
                 break;
               }
-            
+
           }
           //Serial.println(moveTopIndex);
 
           // move everything to the bottom
-          
+
           int gapBottom = highestRow+1;
           int gapTop = moveTopIndex-1;
           for(int iters = 0; iters< (highestRow - lowestRow) + 1; iters++)
@@ -688,14 +686,14 @@ void loop() {
           }
         }
 
-        
+
 
         updateDisplaysSimple(field, ledControls, NUM_LCS);
 
       }
     }
 
-      
+
   }
 
   free_field(field);
