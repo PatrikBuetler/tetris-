@@ -216,7 +216,7 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
   char randomBlockType = blockTypes[rand() % numBlockTypes];
   
   // Randomly select a special block type
-  const int weights[] = {50, 50, 0}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
+  const int weights[] = {50, 30, 20}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
   int totalWeight = 100;
   const char specialBlockTypes[][5] = {"norm\0", "brit\0", "expl\0"}; // Normal, Brittle or Explosive
   const int numSpecialBlockTypes = sizeof(weights) / sizeof(weights[0]);
