@@ -216,7 +216,7 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
   char randomBlockType = blockTypes[rand() % numBlockTypes];
   
   // Randomly select a special block type
-  const int weights[] = {50, 30, 20}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
+  const int weights[] = {70, 15, 15}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
   int totalWeight = 100;
   const char specialBlockTypes[][5] = {"norm\0", "brit\0", "expl\0"}; // Normal, Brittle or Explosive
   const int numSpecialBlockTypes = sizeof(weights) / sizeof(weights[0]);
@@ -272,57 +272,79 @@ void brittle(TetrisBlock* block, Field* field) {
   Serial.print(block->position.x);
   Serial.print(" and ");
   Serial.println(block->position.x+2);
-  for (int xaxis = block->position.x; xaxis < block->position.x+3; xaxis++) {  
-    int lowestRow = 0;
-    int highestRow = -1;
-    for (int line = 1; line < block->position.y+2; line++) {
-      if (line != 0) { // We want to keep the zero row
-        struct Coordinate coord;
-        coord.x = xaxis;
-        coord.y = line;
-        if (isCoordinateSetInField(field, coord, 8, NUM_LCS,1) == 1)
-        {
-          if (line < block->position.y) {
-            lowestRow = line;
-          }
-          if (line >= block->position.y) {
-            highestRow = line;
-          }
+  for (int xaxis = block->position.x; xaxis < block->position.x + 3; xaxis++) {
+    int freeSpace = 0; // Number of free rows below the brittle block
+    //int lowestOccupied = block->position.y + 2; // Bottom row of the brittle block
+    int highestOccupied = block->position.y-1;    // Top row of the brittle block
+    int size = 0; // size of the brittle block, move 1, 2 or 3 pixels downards?
+    
+    // Identify the range of the brittle block
+    for (int line = block->position.y+2; line > 0; line--) {
+        struct Coordinate coord = {xaxis, line};
+        if (isCoordinateSetInField(field, coord, 8, NUM_LCS, 1)) {
+            if (line >= block->position.y) {
+                size++;
+            }
+            if (line >= block->position.y && line > highestOccupied) {
+                highestOccupied = line;
+            }
         }
-      }
+    }
+    // Calculate free space below the brittle block
+    for (int line = highestOccupied-size; line >= 1; line--) {
+        struct Coordinate coord = {xaxis, line};
+        if (isCoordinateSetInField(field, coord, 8, NUM_LCS, 1)) {
+            break; // Stop at the first occupied row
+        }
+        freeSpace++;
     }
 
-    // Serial output for debugging
-    Serial.print("Brittle Block! X axis = ");
+    // Debugging output
+    Serial.print("Brittle! at X axis = ");
     Serial.print(xaxis);
-    Serial.print(" Lowest row: ");
-    Serial.print(lowestRow);
-    Serial.print(", Highest row: ");
-    Serial.println(highestRow);
-    //Serial.println(moveTopIndex);
+    Serial.print(" Free space below: ");
+    Serial.print(freeSpace);
+    Serial.print(", Highest occupied row: ");
+    Serial.print(highestOccupied);
+    Serial.print(", size: ");
+    Serial.print(size);
+    Serial.println();
 
-    // move everything to the bottom
-    int gapBottom = lowestRow+1;
-    int gapTop = highestRow-lowestRow+1;
-    for(int iters = 0; iters< (highestRow - lowestRow) + 1; iters++) {
-      for (int i = lowestRow+2; i <= gapTop; i++) {
-        struct Coordinate setCoord;
-        setCoord.x = xaxis; 
-        setCoord.y = i-1;
-        struct Coordinate checkCoord;
-        checkCoord.x = xaxis;
-        checkCoord.y = i;
-        struct Coordinate unmapCoord;
-        unmapCoord.x = xaxis;
-        unmapCoord.y = i;
-        int toDraw = isCoordinateSetInField(field, checkCoord, 8, NUM_LCS,1);
-        mapCoordinateToField(field, setCoord, 8, NUM_LCS,toDraw);
-        unmapCoordinateFromField(field, unmapCoord, 8, NUM_LCS,toDraw);
+    // Move blocks downward
+    if(freeSpace > 0) {
+      // larger blocks have larger size, so more blocks must be moved downwards
+      for (int y = 0; y < size; y++) {
+          struct Coordinate unmapCoord = {xaxis, highestOccupied};
+          struct Coordinate setCoord = {xaxis, (highestOccupied - freeSpace - (size-1)+(y))};
+          //int toDraw = isCoordinateSetInField(field, unmapCoord, 8, NUM_LCS, 1);
+          Serial.print("Unmap block at x=");
+          Serial.print(xaxis);
+          Serial.print(" y=");
+          Serial.println(highestOccupied);
+          Serial.print("Mapped to x=");
+          Serial.print(xaxis);
+          Serial.print(" y=");
+          Serial.print(highestOccupied - freeSpace - (size-1)+(y));
+          Serial.print(" original y was =");
+          Serial.println(block->position.y);
+          // Move the block if the destination is free
+          if (isCoordinateSetInField(field, setCoord, 8, NUM_LCS,1) == 0)
+                {
+                  mapCoordinateToField(field, setCoord, 8, NUM_LCS, 1);
+                  unmapCoordinateFromField(field, unmapCoord, 8, NUM_LCS, 1);
+                  highestOccupied -= 1;
+                  freeSpace -= 1;
+                }
+          else {
+            break;
+          }
+          // check if done
+          if(freeSpace == 0) {
+            break;
+          }
       }
-      gapBottom--;
-      gapTop--;
-      }
-  }
+    }
+}
   updateDisplaysSimple(field, ledControls, NUM_LCS);
 }
 

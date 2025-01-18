@@ -29,7 +29,6 @@ uint8_t GetIndexSubField(Coordinate coord, int tileSize, int gridWidth)
 void mapCoordinateToField(Field* field, Coordinate coord, int tileSize, int gridWidth, uint8_t toDraw) {
   if (toDraw)
   {
-    
     uint8_t coordIndex = GetIndexSubField(coord,tileSize,gridWidth);
     
     // Calculate position within the subfield
