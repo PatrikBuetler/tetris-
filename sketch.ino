@@ -38,6 +38,7 @@ typedef struct {
     uint8_t currentField;
     uint8_t mapping[9];
     uint8_t visitedFields[2];
+    char specialType[4];
 } TetrisBlock;
 
 
@@ -201,10 +202,26 @@ void resetBlock(TetrisBlock* block, int posX, int posY)
   block->position.y = posY;
 
   // Randomly select a block type
-  const char blockTypes[] = {'t', 'i', 'o', 'l'};
+  const char blockTypes[] = {'t', 'i', 'o', 'l', 'z'};
   const int numBlockTypes = sizeof(blockTypes) / sizeof(blockTypes[0]);
   char randomBlockType = blockTypes[rand() % numBlockTypes];
 
+  // Randomly select a special block type
+  const int weights[] = {50, 30, 20}; // Weights for "norm", "brit", "expl" (Normal, Brittle, Explosive)
+  int totalWeight = 100;
+  const char* specialBlockTypes[] = {"norm", "brit", "expl"}; // Normal, Brittle or Explosive
+  const int numSpecialBlockTypes = sizeof(weights);
+  // Generate a random number between 0 and totalWeight - 1
+  int randomValue = rand() % totalWeight;
+  // Determine which special block type corresponds to the random value
+  int runningSum = 0;
+  for (int i = 0; i < numSpecialBlockTypes; i++) {
+      runningSum += weights[i];
+      if (randomValue < runningSum) {
+          block->specialType = blockTypes[rand() % numBlockTypes];
+      }
+  }
+  
   // Randomly select a rotation (0, 90, 180, or 270 degrees)
   int randomRotation = (rand() % 4) * 90; // Random multiple of 90 degrees
 
