@@ -70,6 +70,14 @@ TetrisBlock* copyBlock = nullptr;
 
 int gameRunnig = 1;
 
+uint8_t* flipSubfield(uint8_t subfield[8]) {
+    static uint8_t flipped[8];
+    for (int i = 0; i < 8; i++) {
+        flipped[i] = subfield[7 - i];
+    }
+    return flipped;
+}
+
 void setSubfieldToDeviceSimple(Field* field, LedControl& lc, int device, int subfieldIndex) {
     if (field == NULL || subfieldIndex < 0 || subfieldIndex >= field->num_subfields) {
         Serial.println("Invalid Field or subfield index.");
@@ -80,9 +88,11 @@ void setSubfieldToDeviceSimple(Field* field, LedControl& lc, int device, int sub
         return;
     }
 
+    uint8_t* flippedSubfield = flipSubfield(field->subfields[subfieldIndex]);
+
     // Update the device with the subfield pattern
     for (int col = 0; col < 8; col++) {
-        lc.setColumn(device, col, field->subfields[subfieldIndex][col]);
+        lc.setColumn(device, col, flippedSubfield[col]);
     }
 }
 
@@ -114,9 +124,11 @@ void setSubfieldToDevice(Field* field, LedControl& lc, int device, int subfieldI
         return;
     }
 
-    // Update the device if it is in the activeField
+    uint8_t* flippedSubfield = flipSubfield(field->subfields[subfieldIndex]);
+
+    // Update the device with the subfield pattern
     for (int col = 0; col < 8; col++) {
-        lc.setColumn(device, col, field->subfields[subfieldIndex][col]);
+        lc.setColumn(device, col, flippedSubfield[col]);
     }
 
 }
