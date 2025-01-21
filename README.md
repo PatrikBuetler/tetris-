@@ -64,6 +64,6 @@ The source code is organized into modular components to facilitate readability a
 - [ELEGOO Starter Kit](https://www.elegoo.com/blogs/arduino-projects/elegoo-mega-2560-the-most-complete-starter-kit-tutorial?srsltid=AfmBOopupDCUx4k3GlIwDG9ThsCZb3olse-rFXBHS9r1umHbmG4WhPqe)
 
 ## Disclaimer
-The content of this project stems from our work. ChatGPT was only used for improving the wording of this report.
+The source code in this project was developed by the project team as part of a university course. While parts of the logic and structure were inspired by the classic Tetris game, all programming and implementation were independently written by the authors. Any external libraries or components used are credited in the references section and the utils section. ChatGPT was used solely for improving the wording and structure of documentation and not for generating code.
 
 
