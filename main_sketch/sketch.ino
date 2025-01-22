@@ -457,7 +457,6 @@ void loop() {
   {
     int StartEndButtonState = digitalRead(START_BUTTON_PIN);
     //Serial.println(StartEndButtonState);
-    if (StartEndButtonState == HIGH && gameStarted == 0)
     if(StartEndButtonState == HIGH && gameStarted == 1)
     {
       gameStarted = 0;
@@ -470,7 +469,7 @@ void loop() {
     else if (StartEndButtonState == HIGH && gameStarted == 0)
     {
       gameStarted = 1;
-      resetSubfields(field);
+      //resetSubfields(field);
       clearAllSubfields(field);
       // draw the starting bottom line 
       fillRowField(field, 0, 8, NUM_LCS);
@@ -478,8 +477,8 @@ void loop() {
       //fillRowField(field, 2, 8, NUM_LCS);
       
       //unFillRowField(field, 2, 8, NUM_LCS);
-      Serial.print(isRowFull(field, 2, 8, NUM_LCS));
-      Serial.print(isRowFull(field, 3, 8, NUM_LCS));
+      //Serial.print(isRowFull(field, 2, 8, NUM_LCS));
+      //Serial.print(isRowFull(field, 3, 8, NUM_LCS));
       updateDisplaysSimple(field, ledControls, NUM_LCS);
     }
     
